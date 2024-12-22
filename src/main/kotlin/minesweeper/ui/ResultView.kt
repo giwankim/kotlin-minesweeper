@@ -20,7 +20,7 @@ object ResultView {
     }
 
     fun render(game: PlayableGame) {
-        println(game.board.render())
+        game.board.render()
     }
 
     fun result(game: CompletedGame) {
@@ -30,11 +30,22 @@ object ResultView {
         }
     }
 
-    private fun PlayableBoard.render(): String {
+    private fun PlayableBoard.render() {
+        val grid = toGrid()
+        val rendered =
+            buildString {
+                grid.forEach { row ->
+                    appendLine(row.joinToString(SPACE))
+                }
+            }
+        println(rendered)
+    }
+
+    private fun PlayableBoard.toGrid(): List<List<String>> {
         val maxY = cells.keys.maxOf { it.y }
         val maxX = cells.keys.maxOf { it.x }
-        return (0..maxY).joinToString(NEWLINE) { y ->
-            (0..maxX).joinToString(SPACE) { x ->
+        return (0..maxY).map { y ->
+            (0..maxX).map { x ->
                 when (get(y, x)) {
                     is MinedCell, is ClosedEmptyCell -> CLOSED
                     is OpenedEmptyCell -> countMines(y, x).toString()
