@@ -2,6 +2,7 @@ package minesweeper.domain
 
 class Cells(
     private val cellMap: Map<Coordinate, Cell>,
+    private val mineCounts: MutableMap<Coordinate, Int> = mutableMapOf(),
 ) : Map<Coordinate, Cell> by cellMap {
     init {
         require(cellMap.isNotEmpty()) {
@@ -10,16 +11,18 @@ class Cells(
     }
 
     fun countNeighboringMines(coordinate: Coordinate): Int =
-        coordinate
-            .neighbors
-            .count { cellMap[it] is MinedCell }
+        mineCounts.getOrPut(coordinate) {
+            coordinate
+                .neighbors
+                .count { cellMap[it] is MinedCell }
+        }
 
     fun open(coordinate: Coordinate): Cells {
         requireCellExists(coordinate)
         checkNotAlreadyOpen(coordinate)
 
         return if (cellMap[coordinate] is MinedCell) {
-            Cells(cellMap.replacing(coordinate, DetonatedMineCell))
+            Cells(cellMap.replacing(coordinate, DetonatedMineCell), mineCounts)
         } else {
             openAllNeighbors(coordinate)
         }
@@ -49,7 +52,7 @@ class Cells(
                 }
         }
 
-        return Cells(newCellMap)
+        return Cells(newCellMap, mineCounts)
     }
 
     private fun addToQueueIfZeroNeighboringMines(
